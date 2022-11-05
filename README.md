@@ -1,2 +1,2 @@
-# proyecto_FuSO
-Practica Final FUSO, grupo formado por Alejandro García y Lara Ocon
+# Blockchain
+Practica Final FUSO, grupo formado por Alejandro Martínez de Guinea y Lara Ocon
