@@ -64,7 +64,7 @@ class Blockchain(object):
         # indice sera el indice del ultimo bloque de la blockchain +1 no?
         # prueba = 0, inicializamos los parametros de prueba siempre a 0
         
-        bloque = Bloque(len(self.cadena_bloques), self.transacciones_no_confirmadas, time.time(), hash_previo, 0)
+        bloque = Bloque(len(self.cadena_bloques) + 1, self.transacciones_no_confirmadas, time.time(), hash_previo, 0)
 
         return bloque
     
@@ -151,7 +151,7 @@ class Blockchain(object):
         # Comprobaciones:
         if not self.prueba_valida(bloque_nuevo, hash_prueba):
             return False
-        if bloque_nuevo.hash_previo != self.cadena_bloques[len(self.cadena_bloques) - 1].hash:
+        if bloque_nuevo.hash_previo != self.cadena_bloques[-1].hash:
             return False
         
         # Añadimos el bloque:
