@@ -95,6 +95,7 @@ def hilo_copia_seguridad():
 
     with open(f"respaldo-nodo"):
         ...
+        # Hasta aqui hemos llegado en la clase del martes
 
 
 
