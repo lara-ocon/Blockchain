@@ -30,7 +30,7 @@ class Bloque:
         Devuelve una cadena de 256 caracteres (hash) codificando toda la
         información del bloque.
         """
-        block_string =json.dumps(self.__dict__, sort_keys=True)
+        block_string = json.dumps(self.__dict__, sort_keys=True)
 
         return hashlib.sha256(block_string.encode()).hexdigest()
 
@@ -44,7 +44,7 @@ class Blockchain(object):
 
         # Codigo a completar (inicializacion de las listas de transacciones y de bloques)
         self.cadena_bloques = []                # aqui empezara la lista enlazada de bloques
-        self.sig_transacciones = []             # lista con transacciones aun no confirmadas
+        self.transacciones_no_confirmadas = []             # lista con transacciones aun no confirmadas
     
 
     def primer_bloque(self):
@@ -64,7 +64,7 @@ class Blockchain(object):
         # indice sera el indice del ultimo bloque de la blockchain +1 no?
         # prueba = 0, inicializamos los parametros de prueba siempre a 0
         
-        bloque = Bloque(len(self.cadena_bloques), self.sig_transacciones, time.time(), hash_previo, 0)
+        bloque = Bloque(len(self.cadena_bloques), self.transacciones_no_confirmadas, time.time(), hash_previo, 0)
 
         return bloque
     
@@ -81,9 +81,9 @@ class Blockchain(object):
         """
         #[...] Codigo a completar
 
-        transaccion = {'origen': origen, 'destino': destino, 'cantidad' : cantidad, 'timestamp': time.time()}
+        transaccion = {'origen': origen, 'destino': destino, 'cantidad' : cantidad, 'tiempo': time.time()}
         # esto lo metemos en la lista de transacciones sin cofirmar
-        self.sig_transacciones = self.sig_transacciones.append(transaccion)
+        self.transacciones_no_confirmadas.append(transaccion)
         # esto prob haya que cambiarlo si lo hacemos con listas enlzadas, no listas de listas
 
         # lo almacenaremos al final de la Blockchain, entonces devolvemos el ID del ultimo?
@@ -156,10 +156,15 @@ class Blockchain(object):
         
         # Añadimos el bloque:
         bloque_nuevo.hash = hash_prueba
-        self.cadena_bloques = self.cadena_bloques.append(bloque_nuevo)
-        self.sig_transacciones = []
+        self.cadena_bloques.append(bloque_nuevo)
+        self.transacciones_no_confirmadas = []
         
         return True
+    
+
+    def last_block(self):
+        # Esta funcion devuelve el ultimo bloque
+        return self.cadena_bloques[-1]
         
         
 
