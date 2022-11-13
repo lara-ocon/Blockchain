@@ -57,7 +57,9 @@ class Blockchain(object):
 
     def primer_bloque(self):
         # establecemos el primer bloque de la Blockchain
-        self.cadena_bloques = Bloque(1, {}, 0, 1, 0)
+        bloque = Bloque(1, [], 0, '1', 0)
+        bloque.hash = bloque.calcular_hash()
+        self.cadena_bloques.append(bloque)
 
     def nuevo_bloque(self, hash_previo: str) -> Bloque:
         """
@@ -173,7 +175,12 @@ class Blockchain(object):
 
 
                 
+'''
+DUDAS:
 
+- Primer bloque: timestamp en entero o string
+- Copia seguridad: paramos en el segundo 60 o esperamos a q termine de editar
+'''
 
 
 

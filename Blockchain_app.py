@@ -19,6 +19,7 @@ app = Flask(__name__)
 
 # Instanciacion de la aplicacion
 blockchain = Blockchain.Blockchain()
+blockchain.primer_bloque()
 
 # Para saber mi ip
 mi_ip = socket.gethostbyname(socket.gethostname())
@@ -62,7 +63,8 @@ def minar():
         } 
     else:
         # Hay transaccion, por lo tanto ademas de minear el bloque, recibimos recompensa
-        previous_hash = blockchain.last_block.hash
+        previous_hash = blockchain.last_block().hash
+
         # Recibimos un pago por minar el bloque. Creamos una nueva transaccion con:
         # Dejamos como origen el 0
         # Destino nuestra ip
@@ -79,7 +81,7 @@ def minar():
 
         # SIEMPRE ES CORRECTO, PERO POR SI ACASO LO DEJAMOS
         if correct:
-            response = {'mensaje': f"Nuevo bloque minado: {nuevo_bloque.toDict()}"} 
+            response = {'hash_bloque': nuevo_bloque.hash, 'hash_previo': previous_hash, 'indice': nuevo_bloque.indice, 'mensaje': 'Nuevo blooque minado', 'prueba': nuevo_bloque.prueba, 'timestamp': nuevo_bloque.timestamp, 'transacciones': nuevo_bloque.transacciones}
             codigo = 200
         else:
 
