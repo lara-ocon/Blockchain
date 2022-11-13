@@ -12,6 +12,8 @@ import pandas as pd
 import time
 import json
 
+import platform as pl # obtemer informacion del nodo
+
 # Instancia del nodo
 app = Flask(__name__)
 
@@ -66,17 +68,21 @@ def minar():
         # Destino nuestra ip
         # Cantidad = 1
         # [Completar el siguiente codigo]
-        response, codigo = nueva_transaccion()
-        if codigo == 400:
-            return response, codigo
+
+        # generamos una nueva transaccion
+        blockchain.nueva_transaccion("0", mi_ip, 1)
 
         nuevo_bloque = blockchain.nuevo_bloque(previous_hash)
-        hash_prueba = nuevo_bloque.calcular_hash()
+        hash_prueba = blockchain.prueba_trabajo(nuevo_bloque)
+        
         correct = blockchain.integra_bloque(nuevo_bloque, hash_prueba)
+
+        # SIEMPRE ES CORRECTO, PERO POR SI ACASO LO DEJAMOS
         if correct:
-            response = {'mensaje': "Se ha integrado correctamente el bloque a la Blockchain"} 
+            response = {'mensaje': f"Nuevo bloque minado: {nuevo_bloque.toDict()}"} 
             codigo = 200
         else:
+
             response = {'mensaje': "No ha sido posible integrar el bloque a la Blockchain"} 
             codigo = 400
 
@@ -86,7 +92,9 @@ def minar():
 def hilo_copia_seguridad():
     while True:
         t1 = time.time()
-        # esta funcion es llamada cada 60 segundos por un hilo
+
+        # POSIBLE MEJORA: SEÑAL EN EL MAIN CADA 60 SEGUNDOS AL HILO
+
         semaforo_copia_seguridad.acquire()
         # entro en la zona critica, ninguna peticion puede realizarse a la vez
         # de esta forma nos quedamos con una foto de la blockchain
@@ -97,7 +105,7 @@ def hilo_copia_seguridad():
             'date': pd.to_datetime('today', unit='s')
             }
 
-        with open(f"respaldo-nodo{mi_ip}.json", "w") as f:
+        with open(f"respaldo-nodo{mi_ip}-{5000}.json", "w") as f:
             f.write(json.dumps(response))
         semaforo_copia_seguridad.release()
         
@@ -105,8 +113,19 @@ def hilo_copia_seguridad():
         t2 = time.time()
         while t2 - t1 < 60:
             t2 = time.time()
+        
+        # PREGUNTAR A PABLO: ¿Paramos al resto de hios obligaotriamente en el segundos
+        # 60 o esperamos a que termine el que este editando
 
 
+@app.route('/system', methods=['GET'])
+def detalles_nodo_actual():
+    response = {
+        'maquina': pl.machine(),
+        'nombre_sistema': pl.system(),
+        'version': pl.version(),
+    }
+    return jsonify(response), 200
 
 
 if __name__ =='__main__':
