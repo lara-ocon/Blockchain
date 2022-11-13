@@ -4,9 +4,10 @@ import json
 import hashlib
 import time
 
+
 class Bloque:
     def __init__(self, indice: int, transacciones: List[Dict], timestamp: float,
-                                            hash_previo: str, prueba: int =0):
+                 hash_previo: str, prueba: int = 0):
         """
         Constructor de la clase `Bloque`.
         :param indice: ID unico del bloque.
@@ -20,9 +21,8 @@ class Bloque:
         self.transacciones = transacciones
         self.timestamp = timestamp
         self.hash_previo = hash_previo          # clave criptográfica del anterior bloque
-        self.prueba = prueba                    # "lo detallaremos mas adelante"
+        self.prueba = prueba  #  "lo detallaremos mas adelante"
         self.hash = None                        # inicializamos a None el hash del bloque
-    
 
     def calcular_hash(self):
         """
@@ -30,27 +30,34 @@ class Bloque:
         Devuelve una cadena de 256 caracteres (hash) codificando toda la
         información del bloque.
         """
-        block_string =json.dumps(self.__dict__, sort_keys=True)
+        block_string = json.dumps(self.__dict__, sort_keys=True)
 
         return hashlib.sha256(block_string.encode()).hexdigest()
+
+    def toDict(self):
+        """
+        Metodo que devuelve un diccionario con la informacion del bloque
+        """
+        return {'indice': self.indice, 'transacciones': self.transacciones,
+                'timestamp': self.timestamp, 'hash_previo': self.hash_previo,
+                'prueba': self.prueba, 'hash': self.hash}
 
 
 class Blockchain(object):
     def __init__(self):
         self.dificultad = 4
         # debe se capaz de mantener una lista de bloques
-        # y además debe almacenar en otra lista aquellas transacciones que 
+        # y además debe almacenar en otra lista aquellas transacciones que
         # todavía no están confirmadas para ser introducidas en un bloque
 
         # Codigo a completar (inicializacion de las listas de transacciones y de bloques)
-        self.cadena_bloques = []                # aqui empezara la lista enlazada de bloques
-        self.sig_transacciones = []             # lista con transacciones aun no confirmadas
-    
+        self.cadena_bloques = []  #  aqui empezara la lista enlazada de bloques
+        # lista con transacciones aun no confirmadas
+        self.sig_transacciones = []
 
     def primer_bloque(self):
         # establecemos el primer bloque de la Blockchain
-        self.cadena_bloques = Bloque(1, {}, 0, 1, 0)          
-
+        self.cadena_bloques = Bloque(1, {}, 0, 1, 0)
 
     def nuevo_bloque(self, hash_previo: str) -> Bloque:
         """
@@ -60,14 +67,14 @@ class Blockchain(object):
         :param hash_previo: el hash del bloque anterior de la cadena
         :return: el nuevo gloque
         """
-        #[...] Codigo a completar
+        # [...] Codigo a completar
         # indice sera el indice del ultimo bloque de la blockchain +1 no?
         # prueba = 0, inicializamos los parametros de prueba siempre a 0
-        
-        bloque = Bloque(len(self.cadena_bloques), self.sig_transacciones, time.time(), hash_previo, 0)
+
+        bloque = Bloque(len(self.cadena_bloques),
+                        self.sig_transacciones, time.time(), hash_previo, 0)
 
         return bloque
-    
 
     def nueva_transaccion(self, origen: str, destino: str, cantidad: int) -> int:
         """
@@ -79,9 +86,10 @@ class Blockchain(object):
         :param cantidad: <int> la candidad
         :return: <int> el indice del bloque que va a almacenar la transaccion
         """
-        #[...] Codigo a completar
+        # [...] Codigo a completar
 
-        transaccion = {'origen': origen, 'destino': destino, 'cantidad' : cantidad, 'timestamp': time.time()}
+        transaccion = {'origen': origen, 'destino': destino,
+                       'cantidad': cantidad, 'timestamp': time.time()}
         # esto lo metemos en la lista de transacciones sin cofirmar
         self.sig_transacciones = self.sig_transacciones.append(transaccion)
         # esto prob haya que cambiarlo si lo hacemos con listas enlzadas, no listas de listas
@@ -89,9 +97,8 @@ class Blockchain(object):
         # lo almacenaremos al final de la Blockchain, entonces devolvemos el ID del ultimo?
         # ESTO FALTA POR HACER
         # return indice_ultimo_bloque
-    
 
-    def prueba_trabajo(self, bloque: Bloque) ->str: 
+    def prueba_trabajo(self, bloque: Bloque) -> str:
         """
         Algoritmo simple de prueba de trabajo:
         - Calculara el hash del bloque hasta que encuentre un hash que empiece
@@ -101,16 +108,15 @@ class Blockchain(object):
         :param bloque: objeto de tipo bloque
         :return: el hash del nuevo bloque (dejara el campo de hash del bloque sin modificar)
         """
-        #[Codificar el resto del metodo]
+        # [Codificar el resto del metodo]
         hash_bloque = bloque.calcular_hash()
-        while hash_bloque[0:self.dificultad] != "0"*self.dificultad :
+        while hash_bloque[0:self.dificultad] != "0"*self.dificultad:
             bloque.prueba += 1
             hash_bloque = bloque.calcular_hash()
-        
+
         # dejamos sin modificar el hash del bloque
-        
+
         return hash_bloque
-    
 
     def prueba_valida(self, bloque: Bloque, hash_bloque: str) -> bool:
         """
@@ -130,9 +136,8 @@ class Blockchain(object):
         if hash_bloque != bloque.calcular_hash():
             return False
         return True
-    
 
-    def integra_bloque(self, bloque_nuevo: Bloque, hash_prueba: str) ->bool:
+    def integra_bloque(self, bloque_nuevo: Bloque, hash_prueba: str) -> bool:
         """
         Metodo para integran correctamente un bloque a la cadena de bloques.
         Debe comprobar que la prueba de hash es valida y que el hash del bloque
@@ -153,19 +158,10 @@ class Blockchain(object):
             return False
         if bloque_nuevo.hash_previo != self.cadena_bloques[len(self.cadena_bloques) - 1].hash:
             return False
-        
+
         # Añadimos el bloque:
         bloque_nuevo.hash = hash_prueba
         self.cadena_bloques = self.cadena_bloques.append(bloque_nuevo)
         self.sig_transacciones = []
-        
+
         return True
-        
-        
-
-
-                
-
-
-
-
