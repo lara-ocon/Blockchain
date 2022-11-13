@@ -9,6 +9,8 @@ from multiprocessing import Semaphore
 from threading import Thread
 
 import pandas as pd
+import time
+import json
 
 # Instancia del nodo
 app = Flask(__name__)
@@ -82,20 +84,27 @@ def minar():
 
 
 def hilo_copia_seguridad():
-    # esta funcion es llamada cada 60 segundos por un hilo
-    semaforo_copia_seguridad.acquire() # ESTE SEMAFORO LO VAMOS A PONER EN EL MAINNNNNNN!!!!!!!!!!
-    # entro en la zona critica, ninguna peticion puede realizarse a la vez
-    # de esta forma nos quedamos con una foto de la blockchain
-    response = {
-        # Solamente permitimos la cadena de aquellos bloques finales que tienen hash
-        'chain': [b.toDict() for b in blockchain.cadena_bloques if b.hash is not None], 
-        'longitud': len(blockchain.cadena_bloques),# longitud de la cadena
-        'date': pd.to_datetime('today', unit='s')
-        }
+    while True:
+        t1 = time.time()
+        # esta funcion es llamada cada 60 segundos por un hilo
+        semaforo_copia_seguridad.acquire()
+        # entro en la zona critica, ninguna peticion puede realizarse a la vez
+        # de esta forma nos quedamos con una foto de la blockchain
+        response = {
+            # Solamente permitimos la cadena de aquellos bloques finales que tienen hash
+            'chain': [b.toDict() for b in blockchain.cadena_bloques if b.hash is not None], 
+            'longitud': len(blockchain.cadena_bloques),# longitud de la cadena
+            'date': pd.to_datetime('today', unit='s')
+            }
 
-    with open(f"respaldo-nodo"):
-        ...
-        # Hasta aqui hemos llegado en la clase del martes
+        with open(f"respaldo-nodo{mi_ip}.json", "w") as f:
+            f.write(json.dumps(response))
+        semaforo_copia_seguridad.release()
+        
+        # esperamos a que pasen 60 segundos para realizar la siguiente copua de seguridad
+        t2 = time.time()
+        while t2 - t1 < 60:
+            t2 = time.time()
 
 
 
