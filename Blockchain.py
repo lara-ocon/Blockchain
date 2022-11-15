@@ -57,11 +57,11 @@ class Blockchain(object):
 
     def primer_bloque(self):
         # establecemos el primer bloque de la Blockchain
-<<<<<<< HEAD
+
         bloque = Bloque(1, [], "0", "1", 0)
-=======
-        bloque = Bloque(1, [], 0, '1', 0)
->>>>>>> fb868ab5b2fef36cb126d8967be6b20ba047e366
+
+        # bloque = Bloque(1, [], 0, '1', 0) preguntar a los profesores
+
         bloque.hash = bloque.calcular_hash()
         self.cadena_bloques.append(bloque)
 

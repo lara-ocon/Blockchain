@@ -145,7 +145,7 @@ def registrar_nodos_completo():
     all_correct = True #[Codigo a desarrollar]
     for nodo in nodos_nuevos:
         nodos_red.add(nodo)                         # añadimos el nodo a la red
-    blockhchain_copy = blockchain.toDict()          # obtenemos una copia de la blockchain
+    blockhchain_copy = blockchain.cadena_bloques    # obtenemos una copia de la blockchain
     nodos_red.add(f"http://{mi_ip}:{puerto}")       # añadimos el nodo del que pendenpara pasarselo a todos los nodos
     for nodo in nodos_red:
         nodos_red.remove(nodo)                      # le pasamos todos los nodos menos el nodo en cuestion
