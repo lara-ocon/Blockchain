@@ -63,6 +63,9 @@ class Blockchain(object):
         # bloque = Bloque(1, [], 0, '1', 0) preguntar a los profesores
 
         bloque.hash = bloque.calcular_hash()
+        while bloque.hash[0:self.dificultad] != "0" * self.dificultad:
+            bloque.prueba += 1
+            bloque.hash = bloque.calcular_hash()
         self.cadena_bloques.append(bloque)
 
     def nuevo_bloque(self, hash_previo: str) -> Bloque:

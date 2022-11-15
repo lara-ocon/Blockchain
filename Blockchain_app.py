@@ -150,21 +150,20 @@ def registrar_nodos_completo():
         # añadimos el nodo a la red
         nodos_red.add(nodo)
     #  obtenemos una copia de la blockchain
-    blockhchain_copy = [b.toDict()
-                        for b in blockchain.cadena_bloques if b.hash is not None]
+    blockhchain_copy = [b.toDict() for b in blockchain.cadena_bloques if b.hash is not None]
     # añadimos el nodo del que pendenpara pasarselo a todos los nodos
     nodos_red.add(f"http://{mi_ip}:{puerto}")
     for nodo in nodos_red:
         #  le pasamos todos los nodos menos el nodo en cuestion
-        nodos_red.remove(nodo)
+        # nodos_red.remove(nodo)
         data = {
-            'nodos_direcciones': list(nodos_red),
+            'nodos_direcciones': [n for n in nodos_red if n != nodo],
             'blockchain': blockhchain_copy
         }
         response = requests.post(f"{nodo}/nodos/registro_simple", data=json.dumps(
             data), headers={'Content-Type': "application/json"})
-        nodos_red.add(nodo)  #  añadimos de nuevo el nodo
-    nodos_red.remove(f"http://{mi_ip}:{puerto}")    # quitamos el nodo local
+        # nodos_red.add(nodo)  #  añadimos de nuevo el nodo
+    # nodos_red.remove(f"http://{mi_ip}:{puerto}")    # quitamos el nodo local
 
     # Fin codigo a desarrollar
     if all_correct:
@@ -201,17 +200,34 @@ def registrar_nodo_actualiza_blockchain():
     if blockchain_leida is None:
         return "El blockchain de la red esta currupto", 400
     else:
-        blockchain = blockchain_leida
+        blockchain.cadena_bloques = blockchain_leida
         return "La blockchain del nodo" + str(mi_ip) + ":" + str(puerto) + "ha sido \
             correctamente actualizada", 200
 
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('-p', '--puerto', default=5001,
+    parser.add_argument('-p', '--puerto', default=5000,
                         type=int, help='puerto para escuchar')
 
     args = parser.parse_args()
     puerto = args.puerto
 
     app.run(host='0.0.0.0', port=puerto)
+
+
+'''
+CAMBIOS REALIZADOS:
+
+- nodos_red.remove(nodo_actual) no es necesario ya que al añadirlo en nodos_red tmbn actualizamos dicho nodo
+- blockchain_leida es una lista, por lo q no debemos igualar blockchain a eso, sino blockchain.cadena_bloques
+- al integrar bloque fallaba porq el primer bloque tenia un hash incorrecto (no empezaba por 4 ceros)
+
+
+FALLOS:
+
+- FALLO MUY MUY GORDO: cuando añadimos un nodo, al integrar los bloques y comprobar el hash,
+                       da error porq el hash calculado es distinto al propuesto (como ya habia
+                       supuesto yo en clase) y no tengo ni zorra de como solucionarlo
+
+'''
