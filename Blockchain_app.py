@@ -12,7 +12,7 @@ import pandas as pd
 import time
 import json
 
-import platform as pl # obtemer informacion del nodo
+import platform as pl  #  obtemer informacion del nodo
 
 # Instancia del nodo
 app = Flask(__name__)
@@ -20,6 +20,7 @@ app = Flask(__name__)
 # Instanciacion de la aplicacion
 blockchain = Blockchain.Blockchain()
 blockchain.primer_bloque()
+nodos_red = set()
 
 # Para saber mi ip
 mi_ip = socket.gethostbyname(socket.gethostname())
@@ -38,18 +39,17 @@ def nueva_transaccion():
     # Creamos una nueva transaccion aqui
     index = len(blockchain.cadena_bloques) + 1
     blockchain.nueva_transaccion(values['origen'], values['destino'], values['cantidad'])
-
-    response = {'mensaje': f'La transaccion se incluira en el bloque con indice {index}'}
-
+    response = {
+        'mensaje': f'La transaccion se incluira en el bloque con indice {index}'}
     return jsonify(response), 201
 
 
 @app.route('/chain', methods=['GET'])
 def blockchain_completa():
-    response ={
+    response = {
         # Solamente permitimos la cadena de aquellos bloques finales que tienen hash
-        'chain': [b.toDict() for b in blockchain.cadena_bloques if b.hash is not None], 
-        'longitud': len(blockchain.cadena_bloques)# longitud de la cadena
+        'chain': [b.toDict() for b in blockchain.cadena_bloques if b.hash is not None],
+        'longitud': len(blockchain.cadena_bloques)  # longitud de la cadena
     }
     return jsonify(response), 200
 
@@ -57,10 +57,10 @@ def blockchain_completa():
 @app.route('/minar', methods=['GET'])
 def minar():
     # No hay transacciones
-    if len(blockchain.transacciones_no_confirmadas) ==0:
-        response ={
+    if len(blockchain.transacciones_no_confirmadas) == 0:
+        response = {
             'mensaje': "No es posible crear un nuevo bloque. No hay transacciones"
-        } 
+        }
     else:
         # Hay transaccion, por lo tanto ademas de minear el bloque, recibimos recompensa
         previous_hash = blockchain.last_block().hash
@@ -76,16 +76,18 @@ def minar():
 
         nuevo_bloque = blockchain.nuevo_bloque(previous_hash)
         hash_prueba = blockchain.prueba_trabajo(nuevo_bloque)
-        
+
         correct = blockchain.integra_bloque(nuevo_bloque, hash_prueba)
 
         # SIEMPRE ES CORRECTO, PERO POR SI ACASO LO DEJAMOS
         if correct:
-            response = {'hash_bloque': nuevo_bloque.hash, 'hash_previo': previous_hash, 'indice': nuevo_bloque.indice, 'mensaje': 'Nuevo blooque minado', 'prueba': nuevo_bloque.prueba, 'timestamp': nuevo_bloque.timestamp, 'transacciones': nuevo_bloque.transacciones}
+            response = {'hash_bloque': nuevo_bloque.hash, 'hash_previo': previous_hash, 'indice': nuevo_bloque.indice, 'mensaje': 'Nuevo blooque minado',
+                        'prueba': nuevo_bloque.prueba, 'timestamp': nuevo_bloque.timestamp, 'transacciones': nuevo_bloque.transacciones}
             codigo = 200
         else:
 
-            response = {'mensaje': "No ha sido posible integrar el bloque a la Blockchain"} 
+            response = {
+                'mensaje': "No ha sido posible integrar el bloque a la Blockchain"}
             codigo = 400
 
         return jsonify(response), codigo
@@ -102,20 +104,21 @@ def hilo_copia_seguridad():
         # de esta forma nos quedamos con una foto de la blockchain
         response = {
             # Solamente permitimos la cadena de aquellos bloques finales que tienen hash
-            'chain': [b.toDict() for b in blockchain.cadena_bloques if b.hash is not None], 
-            'longitud': len(blockchain.cadena_bloques),# longitud de la cadena
+            'chain': [b.toDict() for b in blockchain.cadena_bloques if b.hash is not None],
+            # longitud de la cadena
+            'longitud': len(blockchain.cadena_bloques),
             'date': pd.to_datetime('today', unit='s')
-            }
+        }
 
-        with open(f"respaldo-nodo{mi_ip}-{5000}.json", "w") as f:
+        with open(f"respaldo-nodo{mi_ip}-{puerto}.json", "w") as f:
             f.write(json.dumps(response))
         semaforo_copia_seguridad.release()
-        
+
         # esperamos a que pasen 60 segundos para realizar la siguiente copua de seguridad
         t2 = time.time()
         while t2 - t1 < 60:
             t2 = time.time()
-        
+
         # PREGUNTAR A PABLO: ¿Paramos al resto de hios obligaotriamente en el segundos
         # 60 o esperamos a que termine el que este editando
 
@@ -130,9 +133,51 @@ def detalles_nodo_actual():
     return jsonify(response), 200
 
 
-if __name__ =='__main__':
+@app.route('/nodos/registrar', methods=['POST'])
+def registrar_nodos_completo():
+    values = request.get_json()
+    global blockchain
+    global nodos_red
+    nodos_nuevos = values.get('direccion_nodos')
+    if nodos_nuevos is None:
+        return "Error: No se ha proporcionado una lista de nodos", 400
+    all_correct = True
+    # [Codigo a desarrollar]
+    respuesta = {'blockchain': 1}
+
+    # Fin codigo a desarrollar
+    if all_correct:
+        response = {
+            'mensaje': 'Se han incluido nuevos nodos en la red',
+            'nodos_totales': list(nodos_red)
+        }
+    else:
+        response = {
+            'mensaje': 'Error notificando el nodo estipulado',
+        }
+    return jsonify(response), 201
+
+
+@app.route('/nodos/registro_simple', methods=['POST'])
+def registrar_nodo_actualiza_blockchain():
+    # Obtenemos la variable global de blockchain
+    global blockchain
+    read_json = request.get_json()
+    nodes_addreses = read_json.get("nodos_direcciones")
+    # [...] Codigo a desarrollar
+
+    # [...] fin del codigo a desarrollar
+    if blockchain_leida is None:
+        return "El blockchain de la red esta currupto", 400
+    else:
+        blockchain = blockchain_leida
+        return "La blockchain del nodo" + str(mi_ip) + ":" + str(puerto) + "ha sido correctamente actualizada", 200
+
+
+if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('-p', '--puerto', default=5000, type=int, help='puerto para escuchar')
+    parser.add_argument('-p', '--puerto', default=5000,
+                        type=int, help='puerto para escuchar')
 
     args = parser.parse_args()
     puerto = args.puerto
