@@ -153,10 +153,9 @@ def registrar_nodos_completo():
             'nodos_direcciones': list(nodos_red),
             'blockchain': blockhchain_copy
         }
-        response = requests.post(f"{nodo}/nodos/registro_simple", data=json.dumps(data), headers ={'Content-Type':
-                                          "application/json"})
+        response = requests.post(f"{nodo}/nodos/registro_simple", data=json.dumps(data), headers ={'Content-Type': "application/json"})
         nodos_red.add(nodo)                         # añadimos de nuevo el nodo
-    nodos_red.remove(f"http://{mi_ip}:{puerto}")  # quitamos el nodo local
+    nodos_red.remove(f"http://{mi_ip}:{puerto}")    # quitamos el nodo local
 
     # Fin codigo a desarrollar
     if all_correct:
