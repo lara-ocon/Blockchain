@@ -57,7 +57,9 @@ class Blockchain(object):
 
     def primer_bloque(self):
         # establecemos el primer bloque de la Blockchain
-        self.cadena_bloques = Bloque(1, {}, 0, 1, 0)
+        bloque = Bloque(1, [], "0", "1", 0)
+        bloque.hash = bloque.calcular_hash()
+        self.cadena_bloques.append(bloque)
 
     def nuevo_bloque(self, hash_previo: str) -> Bloque:
         """
@@ -169,7 +171,8 @@ class Blockchain(object):
         # Esta funcion devuelve el ultimo bloque
         return self.cadena_bloques[-1]
         
-        
+# DUDCAS
+# timestamp del primer bloque en string?
 
 
                 
