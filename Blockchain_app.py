@@ -39,10 +39,12 @@ def nueva_transaccion():
     if not all(k in values for k in required):
         return 'Faltan valores', 400
     # Creamos una nueva transaccion aqui
-    blockchain.nueva_transaccion(values['origen'], values['destino'], values['cantidad'])
+    blockchain.nueva_transaccion(
+        values['origen'], values['destino'], values['cantidad'])
     index = len(blockchain.cadena_bloques) + 1
 
-    response = {'mensaje': f'La transaccion se incluira en el bloque con indice {index}'}
+    response = {
+        'mensaje': f'La transaccion se incluira en el bloque con indice {index}'}
 
     return jsonify(response), 201
 
@@ -83,7 +85,8 @@ def minar():
 
         # SIEMPRE ES CORRECTO, PERO POR SI ACASO LO DEJAMOS
         if correct:
-            response = {'hash_bloque': nuevo_bloque.hash, 'hash_previo': previous_hash, 'indice': nuevo_bloque.indice, 'mensaje': 'Nuevo blooque minado', 'prueba': nuevo_bloque.prueba, 'timestamp': nuevo_bloque.timestamp, 'transacciones': nuevo_bloque.transacciones} 
+            response = {'hash_bloque': nuevo_bloque.hash, 'hash_previo': previous_hash, 'indice': nuevo_bloque.indice, 'mensaje': 'Nuevo blooque minado',
+                        'prueba': nuevo_bloque.prueba, 'timestamp': nuevo_bloque.timestamp, 'transacciones': nuevo_bloque.transacciones}
             codigo = 200
         else:
 
@@ -142,29 +145,35 @@ def registrar_nodos_completo():
     nodos_nuevos = values.get('direccion_nodos')
     if nodos_nuevos is None:
         return "Error: No se ha proporcionado una lista de nodos", 400
-    all_correct = True #[Codigo a desarrollar]
+    all_correct = True  # [Codigo a desarrollar]
     for nodo in nodos_nuevos:
-        nodos_red.add(nodo)                         # añadimos el nodo a la red
-    blockhchain_copy = blockchain.cadena_bloques    # obtenemos una copia de la blockchain
-    nodos_red.add(f"http://{mi_ip}:{puerto}")       # añadimos el nodo del que pendenpara pasarselo a todos los nodos
+        # añadimos el nodo a la red
+        nodos_red.add(nodo)
+    #  obtenemos una copia de la blockchain
+    blockhchain_copy = [b.toDict()
+                        for b in blockchain.cadena_bloques if b.hash is not None]
+    # añadimos el nodo del que pendenpara pasarselo a todos los nodos
+    nodos_red.add(f"http://{mi_ip}:{puerto}")
     for nodo in nodos_red:
-        nodos_red.remove(nodo)                      # le pasamos todos los nodos menos el nodo en cuestion
+        #  le pasamos todos los nodos menos el nodo en cuestion
+        nodos_red.remove(nodo)
         data = {
             'nodos_direcciones': list(nodos_red),
             'blockchain': blockhchain_copy
         }
-        response = requests.post(f"{nodo}/nodos/registro_simple", data=json.dumps(data), headers ={'Content-Type': "application/json"})
-        nodos_red.add(nodo)                         # añadimos de nuevo el nodo
+        response = requests.post(f"{nodo}/nodos/registro_simple", data=json.dumps(
+            data), headers={'Content-Type': "application/json"})
+        nodos_red.add(nodo)  #  añadimos de nuevo el nodo
     nodos_red.remove(f"http://{mi_ip}:{puerto}")    # quitamos el nodo local
 
     # Fin codigo a desarrollar
     if all_correct:
-        response ={
+        response = {
             'mensaje': 'Se han incluido nuevos nodos en la red',
             'nodos_totales': list(nodos_red)
         }
     else:
-        response ={
+        response = {
             'mensaje': 'Error notificando el nodo estipulado',
         }
     return jsonify(response), 201
@@ -176,30 +185,30 @@ def registrar_nodo_actualiza_blockchain():
     global blockchain
     global nodos_red
     read_json = request.get_json()
-    nodos_red = read_json.get("nodos_direcciones")  # actualizamos la lista de nodos red
+    #  actualizamos la lista de nodos red
+    nodos_red = set(read_json.get("nodos_direcciones"))
     # [...] Codigo a desarrollar
     blockchain_leida = read_json.get("blockchain")
-    blockchain = Blockchain.Blockchain()            # actualizamos la blockchain
+    blockchain = Blockchain.Blockchain()  #  actualizamos la blockchain
     for bloque_leido in blockchain_leida:
-        bloque = Blockchain.Bloque(bloque_leido["indice"], bloque_leido["transacciones"], bloque_leido["timestamp"], bloque_leido["hash_previo"], bloque_leido["prueba"])
-        if not blockchain.integra_bloque(bloque, bloque_leido["hash"]): # integra bloque ve si el hash prueba coincide con el hash del bloque
+        bloque = Blockchain.Bloque(bloque_leido["indice"], bloque_leido["transacciones"],
+                                   bloque_leido["timestamp"], bloque_leido["hash_previo"], bloque_leido["prueba"])
+        #  integra bloque ve si el hash prueba coincide con el hash del bloque
+        if not blockchain.integra_bloque(bloque, bloque_leido["hash"]):
             return "Error: La blockchain recibida no es valida", 400
 
-    #[...] fin del codigo a desarrollar
+    # [...] fin del codigo a desarrollar
     if blockchain_leida is None:
         return "El blockchain de la red esta currupto", 400
     else:
         blockchain = blockchain_leida
-        return "La blockchain del nodo" +str(mi_ip) +":" +str(puerto) +"ha sido \
+        return "La blockchain del nodo" + str(mi_ip) + ":" + str(puerto) + "ha sido \
             correctamente actualizada", 200
 
 
-
-
-
-if __name__ =='__main__':
+if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('-p', '--puerto', default=5000,
+    parser.add_argument('-p', '--puerto', default=5001,
                         type=int, help='puerto para escuchar')
 
     args = parser.parse_args()
