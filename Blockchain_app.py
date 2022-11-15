@@ -12,7 +12,7 @@ import pandas as pd
 import time
 import json
 
-import platform as pl # obtemer informacion del nodo
+import platform as pl  #  obtemer informacion del nodo
 
 import requests
 
@@ -22,10 +22,7 @@ app = Flask(__name__)
 # Instanciacion de la aplicacion
 blockchain = Blockchain.Blockchain()
 blockchain.primer_bloque()
-<<<<<<< HEAD
-=======
-nodos_red = set() # almacena nodos de la red menos el del programa actual
->>>>>>> lara2
+nodos_red = set()
 
 # Para saber mi ip
 mi_ip = socket.gethostbyname(socket.gethostname())
@@ -52,10 +49,10 @@ def nueva_transaccion():
 
 @app.route('/chain', methods=['GET'])
 def blockchain_completa():
-    response ={
+    response = {
         # Solamente permitimos la cadena de aquellos bloques finales que tienen hash
-        'chain': [b.toDict() for b in blockchain.cadena_bloques if b.hash is not None], 
-        'longitud': len(blockchain.cadena_bloques)# longitud de la cadena
+        'chain': [b.toDict() for b in blockchain.cadena_bloques if b.hash is not None],
+        'longitud': len(blockchain.cadena_bloques)  # longitud de la cadena
     }
     return jsonify(response), 200
 
@@ -63,10 +60,10 @@ def blockchain_completa():
 @app.route('/minar', methods=['GET'])
 def minar():
     # No hay transacciones
-    if len(blockchain.transacciones_no_confirmadas) ==0:
-        response ={
+    if len(blockchain.transacciones_no_confirmadas) == 0:
+        response = {
             'mensaje': "No es posible crear un nuevo bloque. No hay transacciones"
-        } 
+        }
     else:
         # Hay transaccion, por lo tanto ademas de minear el bloque, recibimos recompensa
         previous_hash = blockchain.last_block().hash
@@ -81,7 +78,7 @@ def minar():
 
         nuevo_bloque = blockchain.nuevo_bloque(previous_hash)
         hash_prueba = blockchain.prueba_trabajo(nuevo_bloque)
-        
+
         correct = blockchain.integra_bloque(nuevo_bloque, hash_prueba)
 
         # SIEMPRE ES CORRECTO, PERO POR SI ACASO LO DEJAMOS
@@ -90,7 +87,8 @@ def minar():
             codigo = 200
         else:
 
-            response = {'mensaje': "No ha sido posible integrar el bloque a la Blockchain"} 
+            response = {
+                'mensaje': "No ha sido posible integrar el bloque a la Blockchain"}
             codigo = 400
 
         return jsonify(response), codigo
@@ -107,20 +105,21 @@ def hilo_copia_seguridad():
         # de esta forma nos quedamos con una foto de la blockchain
         response = {
             # Solamente permitimos la cadena de aquellos bloques finales que tienen hash
-            'chain': [b.toDict() for b in blockchain.cadena_bloques if b.hash is not None], 
-            'longitud': len(blockchain.cadena_bloques),# longitud de la cadena
+            'chain': [b.toDict() for b in blockchain.cadena_bloques if b.hash is not None],
+            # longitud de la cadena
+            'longitud': len(blockchain.cadena_bloques),
             'date': pd.to_datetime('today', unit='s')
-            }
+        }
 
         with open(f"respaldo-nodo{mi_ip}-{puerto}.json", "w") as f:
             f.write(json.dumps(response))
         semaforo_copia_seguridad.release()
-        
+
         # esperamos a que pasen 60 segundos para realizar la siguiente copua de seguridad
         t2 = time.time()
         while t2 - t1 < 60:
             t2 = time.time()
-        
+
         # PREGUNTAR A PABLO: ¿Paramos al resto de hios obligaotriamente en el segundos
         # 60 o esperamos a que termine el que este editando
 
@@ -201,7 +200,8 @@ def registrar_nodo_actualiza_blockchain():
 
 if __name__ =='__main__':
     parser = ArgumentParser()
-    parser.add_argument('-p', '--puerto', default=5000, type=int, help='puerto para escuchar')
+    parser.add_argument('-p', '--puerto', default=5000,
+                        type=int, help='puerto para escuchar')
 
     args = parser.parse_args()
     puerto = args.puerto
