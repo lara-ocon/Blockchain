@@ -14,12 +14,18 @@ import json
 
 import platform as pl # obtemer informacion del nodo
 
+import requests
+
 # Instancia del nodo
 app = Flask(__name__)
 
 # Instanciacion de la aplicacion
 blockchain = Blockchain.Blockchain()
 blockchain.primer_bloque()
+<<<<<<< HEAD
+=======
+nodos_red = set() # almacena nodos de la red menos el del programa actual
+>>>>>>> lara2
 
 # Para saber mi ip
 mi_ip = socket.gethostbyname(socket.gethostname())
@@ -106,7 +112,7 @@ def hilo_copia_seguridad():
             'date': pd.to_datetime('today', unit='s')
             }
 
-        with open(f"respaldo-nodo{mi_ip}-{5000}.json", "w") as f:
+        with open(f"respaldo-nodo{mi_ip}-{puerto}.json", "w") as f:
             f.write(json.dumps(response))
         semaforo_copia_seguridad.release()
         
@@ -127,6 +133,70 @@ def detalles_nodo_actual():
         'version': pl.version(),
     }
     return jsonify(response), 200
+
+
+@app.route('/nodos/registrar', methods=['POST'])
+def registrar_nodos_completo():
+    values = request.get_json()
+    global blockchain
+    global nodos_red
+    nodos_nuevos = values.get('direccion_nodos')
+    if nodos_nuevos is None:
+        return "Error: No se ha proporcionado una lista de nodos", 400
+    all_correct = True #[Codigo a desarrollar]
+    for nodo in nodos_nuevos:
+        nodos_red.add(nodo)                         # añadimos el nodo a la red
+    blockhchain_copy = blockchain.toDict()          # obtenemos una copia de la blockchain
+    nodos_red.add(f"http://{mi_ip}:{puerto}")       # añadimos el nodo del que pendenpara pasarselo a todos los nodos
+    for nodo in nodos_red:
+        nodos_red.remove(nodo)                      # le pasamos todos los nodos menos el nodo en cuestion
+        data = {
+            'nodos_direcciones': list(nodos_red),
+            'blockchain': blockhchain_copy
+        }
+        response = requests.post(f"{nodo}/nodos/registro_simple", data=json.dumps(data), headers ={'Content-Type':
+                                          "application/json"})
+        nodos_red.add(nodo)                         # añadimos de nuevo el nodo
+    nodos_red.remove(f"http://{mi_ip}:{puerto}")  # quitamos el nodo local
+
+    # Fin codigo a desarrollar
+    if all_correct:
+        response ={
+            'mensaje': 'Se han incluido nuevos nodos en la red',
+            'nodos_totales': list(nodos_red)
+        }
+    else:
+        response ={
+            'mensaje': 'Error notificando el nodo estipulado',
+        }
+    return jsonify(response), 201
+
+
+@app.route('/nodos/registro_simple', methods=['POST'])
+def registrar_nodo_actualiza_blockchain():
+    # Obtenemos la variable global de blockchain
+    global blockchain
+    global nodos_red
+    read_json = request.get_json()
+    nodos_red = read_json.get("nodos_direcciones")  # actualizamos la lista de nodos red
+    # [...] Codigo a desarrollar
+    blockchain_leida = read_json.get("blockchain")
+    blockchain = Blockchain.Blockchain()            # actualizamos la blockchain
+    for bloque_leido in blockchain_leida:
+        bloque = Blockchain.Bloque(bloque_leido["indice"], bloque_leido["transacciones"], bloque_leido["timestamp"], bloque_leido["hash_previo"], bloque_leido["prueba"])
+        if not blockchain.integra_bloque(bloque, bloque_leido["hash"]): # integra bloque ve si el hash prueba coincide con el hash del bloque
+            return "Error: La blockchain recibida no es valida", 400
+
+    #[...] fin del codigo a desarrollar
+    if blockchain_leida is None:
+        return "El blockchain de la red esta currupto", 400
+    else:
+        blockchain = blockchain_leida
+        return "La blockchain del nodo" +str(mi_ip) +":" +str(puerto) +"ha sido \
+            correctamente actualizada", 200
+
+
+
 
 
 if __name__ =='__main__':
