@@ -61,11 +61,21 @@ def blockchain_completa():
 
 @app.route('/minar', methods=['GET'])
 def minar():
+    # Antes de minar, comprobamos si hay conflictos
+    if resuelve_conflictos():
+        # Esto obliga al nodo a volver a capturar transacciones si quiere 
+        # crear el nuevo bloque
+        response = {
+            'mensaje': "Ha habido un conflicto. Esta cadena se ha actualizado con una version mas larga"
+        }
+        return jsonify(response), 200
+        
     # No hay transacciones
-    if len(blockchain.transacciones_no_confirmadas) == 0:
+    elif len(blockchain.transacciones_no_confirmadas) == 0:
         response = {
             'mensaje': "No es posible crear un nuevo bloque. No hay transacciones"
         }
+        return jsonify(response), 200
     else:
         # Hay transaccion, por lo tanto ademas de minear el bloque, recibimos recompensa
         previous_hash = blockchain.last_block().hash
@@ -206,6 +216,38 @@ def registrar_nodo_actualiza_blockchain():
             correctamente actualizada", 200
 
 
+def resuelve_conflictos():
+    """
+    Mecanismo para establecer el consenso y resolver los conflictos.
+    Esta función analiza la longitud de la cadena, del nodo. En caso de ser
+    la mas larga la deja como está, en caso contrario, la sustituye por la
+    cadena mas larga de la red.
+    """
+    global blockchain
+    global nodos_red
+    longitud_actual = len(blockchain.cadena_bloques)
+    # [Codigo a completar]
+    
+    #  obtenemos la cadena de cada nodo
+    for nodo in nodos_red:
+        response = requests.get(f"{nodo}/chain")
+        
+        if response.status_code == 200:
+            
+            #  obtenemos la cadena
+            cadena = response.json()["chain"]
+            
+            # obtenemos su longitud
+            longitud = len(cadena)
+            
+            #  comprobamos que la longitud de la cadena sea mayor que la actual
+            if longitud > longitud_actual:
+                # Nuestra cadena no es la mas larga, se ha quedado atrás
+                return True
+    # despues de comprobar todos los nodos, vemos que no ha conflictos
+    return False
+
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-p', '--puerto', default=5000,
@@ -222,6 +264,8 @@ CAMBIOS REALIZADOS:
 
 - nodos_red.remove(nodo_actual) no es necesario ya que al añadirlo en nodos_red tmbn actualizamos dicho nodo
 - al integrar bloque fallaba porq el primer bloque tenia un hash incorrecto (no empezaba por 4 ceros)
+- Dentro de minar, antes de minar un bloque comprobamos que no hay conflictos (ed: nuestra cadena no esta actualizada
+    del todo, ed: no es la mas larga)
 
 
 FALLOS:
