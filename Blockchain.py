@@ -161,9 +161,6 @@ class Blockchain(object):
 
         # Comprobaciones:
         if not self.prueba_valida(bloque_nuevo, hash_prueba):
-            print('\nIntegrando bloque')
-            print(bloque_nuevo.toDict())
-            print(hash_prueba)
             return False
         if bloque_nuevo.hash_previo != self.cadena_bloques[-1].hash:
             return False

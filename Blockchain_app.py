@@ -93,8 +93,6 @@ def minar():
             response = {
                 'mensaje': "No ha sido posible integrar el bloque a la Blockchain"}
             codigo = 400
-        print('\nBloque minado')
-        print(nuevo_bloque.toDict())
 
         return jsonify(response), codigo
 
@@ -153,6 +151,7 @@ def registrar_nodos_completo():
         nodos_red.add(nodo)
     #  obtenemos una copia de la blockchain
     blockhchain_copy = [b.toDict() for b in blockchain.cadena_bloques if b.hash is not None]
+    blockhchain_copy.pop(0)
     # añadimos el nodo del que pendenpara pasarselo a todos los nodos
     nodos_red.add(f"http://{mi_ip}:{puerto}")
     for nodo in nodos_red:
@@ -190,10 +189,9 @@ def registrar_nodo_actualiza_blockchain():
     nodos_red = set(read_json.get("nodos_direcciones"))
     # [...] Codigo a desarrollar
     blockchain_leida = read_json.get("blockchain")
-    blockchain = Blockchain.Blockchain()  #  actualizamos la blockchain
+    blockchain = Blockchain.Blockchain()
+    blockchain.primer_bloque()
     for bloque_leido in blockchain_leida:
-        print('\nBloque leido')
-        print(bloque_leido)
         bloque = Blockchain.Bloque(bloque_leido["indice"], bloque_leido["transacciones"],
                                    bloque_leido["timestamp"], bloque_leido["hash_previo"], bloque_leido["prueba"])
         #  integra bloque ve si el hash prueba coincide con el hash del bloque
@@ -204,7 +202,6 @@ def registrar_nodo_actualiza_blockchain():
     if blockchain_leida is None:
         return "El blockchain de la red esta currupto", 400
     else:
-        blockchain.cadena_bloques = blockchain_leida
         return "La blockchain del nodo" + str(mi_ip) + ":" + str(puerto) + "ha sido \
             correctamente actualizada", 200
 
@@ -224,7 +221,6 @@ if __name__ == '__main__':
 CAMBIOS REALIZADOS:
 
 - nodos_red.remove(nodo_actual) no es necesario ya que al añadirlo en nodos_red tmbn actualizamos dicho nodo
-- blockchain_leida es una lista, por lo q no debemos igualar blockchain a eso, sino blockchain.cadena_bloques
 - al integrar bloque fallaba porq el primer bloque tenia un hash incorrecto (no empezaba por 4 ceros)
 
 
