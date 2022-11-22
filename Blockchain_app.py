@@ -93,6 +93,8 @@ def minar():
             response = {
                 'mensaje': "No ha sido posible integrar el bloque a la Blockchain"}
             codigo = 400
+        print('\nBloque minado')
+        print(nuevo_bloque.toDict())
 
         return jsonify(response), codigo
 
@@ -190,6 +192,8 @@ def registrar_nodo_actualiza_blockchain():
     blockchain_leida = read_json.get("blockchain")
     blockchain = Blockchain.Blockchain()  #  actualizamos la blockchain
     for bloque_leido in blockchain_leida:
+        print('\nBloque leido')
+        print(bloque_leido)
         bloque = Blockchain.Bloque(bloque_leido["indice"], bloque_leido["transacciones"],
                                    bloque_leido["timestamp"], bloque_leido["hash_previo"], bloque_leido["prueba"])
         #  integra bloque ve si el hash prueba coincide con el hash del bloque

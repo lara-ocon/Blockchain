@@ -38,10 +38,10 @@ class Bloque:
         """
         Metodo que devuelve un diccionario con la informacion del bloque
         """
-        return {'indice': self.indice, 'transacciones': self.transacciones,
-                'timestamp': self.timestamp, 'hash_previo': self.hash_previo,
-                'prueba': self.prueba, 'hash': self.hash}
-
+        # return {'indice': self.indice, 'transacciones': self.transacciones,
+        #         'timestamp': self.timestamp, 'hash_previo': self.hash_previo,
+        #         'prueba': self.prueba, 'hash': self.hash}
+        return dict(sorted(self.__dict__.items()))
 
 class Blockchain(object):
     def __init__(self):
@@ -58,7 +58,7 @@ class Blockchain(object):
     def primer_bloque(self):
         # establecemos el primer bloque de la Blockchain
 
-        bloque = Bloque(1, [], "0", "1", 0)
+        bloque = Bloque(1, [], 0, "1", 0)
 
         # bloque = Bloque(1, [], 0, '1', 0) preguntar a los profesores
 
@@ -120,7 +120,6 @@ class Blockchain(object):
         while hash_bloque[0:self.dificultad] != "0"*self.dificultad:
             bloque.prueba += 1
             hash_bloque = bloque.calcular_hash()
-
         # dejamos sin modificar el hash del bloque
 
         return hash_bloque
@@ -162,6 +161,9 @@ class Blockchain(object):
 
         # Comprobaciones:
         if not self.prueba_valida(bloque_nuevo, hash_prueba):
+            print('\nIntegrando bloque')
+            print(bloque_nuevo.toDict())
+            print(hash_prueba)
             return False
         if bloque_nuevo.hash_previo != self.cadena_bloques[-1].hash:
             return False
@@ -178,7 +180,7 @@ class Blockchain(object):
         # Esta funcion devuelve el ultimo bloque
         return self.cadena_bloques[-1]
         
-# DUDCAS
+# DUDAS
 # timestamp del primer bloque en string?
 
 
