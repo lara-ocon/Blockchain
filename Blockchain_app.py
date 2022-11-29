@@ -61,6 +61,7 @@ def blockchain_completa():
 
 @app.route('/minar', methods=['GET'])
 def minar():
+    semaforo_copia_seguridad.acquire()
     # Antes de minar, comprobamos si hay conflictos
     if resuelve_conflictos():
         # Esto obliga al nodo a volver a capturar transacciones si quiere 
@@ -68,6 +69,7 @@ def minar():
         response = {
             'mensaje': "Ha habido un conflicto. Esta cadena se ha actualizado con una version mas larga"
         }
+        semaforo_copia_seguridad.release()
         return jsonify(response), 200
         
     # No hay transacciones
@@ -75,6 +77,7 @@ def minar():
         response = {
             'mensaje': "No es posible crear un nuevo bloque. No hay transacciones"
         }
+        semaforo_copia_seguridad.release()
         return jsonify(response), 200
     else:
         # Hay transaccion, por lo tanto ademas de minear el bloque, recibimos recompensa
@@ -104,6 +107,7 @@ def minar():
                 'mensaje': "No ha sido posible integrar el bloque a la Blockchain"}
             codigo = 400
 
+        semaforo_copia_seguridad.release()
         return jsonify(response), codigo
 
 
@@ -111,6 +115,11 @@ def hilo_copia_seguridad():
     while True:
         t1 = time.time()
 
+        # esperamos a que pasen 60 segundos para realizar la siguiente copua de seguridad
+        t2 = time.time()
+        while t2 - t1 < 60:
+            t2 = time.time()
+        
         # POSIBLE MEJORA: SEÑAL EN EL MAIN CADA 60 SEGUNDOS AL HILO
 
         semaforo_copia_seguridad.acquire()
@@ -127,14 +136,6 @@ def hilo_copia_seguridad():
         with open(f"respaldo-nodo{mi_ip}-{puerto}.json", "w") as f:
             f.write(json.dumps(response))
         semaforo_copia_seguridad.release()
-
-        # esperamos a que pasen 60 segundos para realizar la siguiente copua de seguridad
-        t2 = time.time()
-        while t2 - t1 < 60:
-            t2 = time.time()
-
-        # PREGUNTAR A PABLO: ¿Paramos al resto de hios obligaotriamente en el segundos
-        # 60 o esperamos a que termine el que este editando
 
 
 @app.route('/system', methods=['GET'])
@@ -227,7 +228,7 @@ def resuelve_conflictos():
     global nodos_red
     longitud_actual = len(blockchain.cadena_bloques)
     # [Codigo a completar]
-    
+    error = False
     #  obtenemos la cadena de cada nodo
     for nodo in nodos_red:
         response = requests.get(f"{nodo}/chain")
@@ -243,12 +244,19 @@ def resuelve_conflictos():
             #  comprobamos que la longitud de la cadena sea mayor que la actual
             if longitud > longitud_actual:
                 # Nuestra cadena no es la mas larga, se ha quedado atrás
-                return True
+                error = True
+                longitud_actual = longitud
+                cadena_actual = cadena
     # despues de comprobar todos los nodos, vemos que no ha conflictos
-    return False
+    if error:
+        blockchain.cadena_bloques = cadena_actual
+        blockchain.transacciones_no_confirmadas = []
+    return error
 
 
 if __name__ == '__main__':
+    th=Thread(target=hilo_copia_seguridad)
+    th.start()
     parser = ArgumentParser()
     parser.add_argument('-p', '--puerto', default=5000,
                         type=int, help='puerto para escuchar')
@@ -257,6 +265,8 @@ if __name__ == '__main__':
     puerto = args.puerto
 
     app.run(host='0.0.0.0', port=puerto)
+    th.join()
+        
 
 
 '''
