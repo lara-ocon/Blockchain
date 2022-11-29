@@ -117,7 +117,7 @@ def hilo_copia_seguridad():
 
         # esperamos a que pasen 60 segundos para realizar la siguiente copua de seguridad
         t2 = time.time()
-        while t2 - t1 < 60:
+        while t2 - t1 < 5:
             t2 = time.time()
         
         # POSIBLE MEJORA: SEÑAL EN EL MAIN CADA 60 SEGUNDOS AL HILO
@@ -130,7 +130,7 @@ def hilo_copia_seguridad():
             'chain': [b.toDict() for b in blockchain.cadena_bloques if b.hash is not None],
             # longitud de la cadena
             'longitud': len(blockchain.cadena_bloques),
-            'date': pd.to_datetime('today', unit='s')
+            'date': str(pd.to_datetime('today'))
         }
 
         with open(f"respaldo-nodo{mi_ip}-{puerto}.json", "w") as f:
