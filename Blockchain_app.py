@@ -117,7 +117,7 @@ def hilo_copia_seguridad():
 
         # esperamos a que pasen 60 segundos para realizar la siguiente copua de seguridad
         t2 = time.time()
-        while t2 - t1 < 5:
+        while t2 - t1 < 60:
             t2 = time.time()
         
         # POSIBLE MEJORA: SEÑAL EN EL MAIN CADA 60 SEGUNDOS AL HILO
