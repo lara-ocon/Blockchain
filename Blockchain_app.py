@@ -164,7 +164,13 @@ def registrar_nodos_completo():
     blockhchain_copy = [b.toDict() for b in blockchain.cadena_bloques if b.hash is not None]
     blockhchain_copy.pop(0)
     # añadimos el nodo del que pendenpara pasarselo a todos los nodos
+
+    print(f"Añadimos a nodos red {mi_ip}:{puerto}")
+
     nodos_red.add(f"http://{mi_ip}:{puerto}")
+
+    print("los nodos de la red en registrar nodos completo es ", nodos_red)
+
     for nodo in nodos_red:
         #  le pasamos todos los nodos menos el nodo en cuestion
         # nodos_red.remove(nodo)
@@ -172,6 +178,8 @@ def registrar_nodos_completo():
             'nodos_direcciones': [n for n in nodos_red if n != nodo],
             'blockchain': blockhchain_copy
         }
+        print(f"Vamos a hacer request a {nodo}/nodos/registro_simple")
+
         response = requests.post(f"{nodo}/nodos/registro_simple", data=json.dumps(
             data), headers={'Content-Type': "application/json"})
         # nodos_red.add(nodo)  #  añadimos de nuevo el nodo
@@ -195,9 +203,15 @@ def registrar_nodo_actualiza_blockchain():
     # Obtenemos la variable global de blockchain
     global blockchain
     global nodos_red
+
+    print("puerto  en registro simple es", puerto)  # BORRAR ===================
+
     read_json = request.get_json()
     #  actualizamos la lista de nodos red
     nodos_red = set(read_json.get("nodos_direcciones"))
+
+    print("nodos red en registro simple es", nodos_red) # BORRAR ===============
+
     # [...] Codigo a desarrollar
     blockchain_leida = read_json.get("blockchain")
     blockchain = Blockchain.Blockchain()
@@ -226,11 +240,17 @@ def resuelve_conflictos():
     """
     global blockchain
     global nodos_red
+
+    print("nos red es: ", nodos_red)  # BORRAR ===================
+
     longitud_actual = len(blockchain.cadena_bloques)
     # [Codigo a completar]
     error = False
     #  obtenemos la cadena de cada nodo
     for nodo in nodos_red:
+
+        print(f"Vamos a hacer request a {nodo}/blockchain")    # BORRAR ===============
+
         response = requests.get(f"{nodo}/chain")
         
         if response.status_code == 200:
@@ -249,7 +269,14 @@ def resuelve_conflictos():
                 cadena_actual = cadena
     # despues de comprobar todos los nodos, vemos que no ha conflictos
     if error:
-        blockchain.cadena_bloques = cadena_actual
+        blockchain = Blockchain.Blockchain()
+        blockchain.primer_bloque()
+        for bloque_leido in cadena_actual:
+            bloque = Blockchain.Bloque(bloque_leido["indice"], bloque_leido["transacciones"],
+                                    bloque_leido["timestamp"], bloque_leido["hash_previo"], bloque_leido["prueba"])
+            #  integra bloque ve si el hash prueba coincide con el hash del bloque
+            if not blockchain.integra_bloque(bloque, bloque_leido["hash"]):
+                return "Error: La blockchain recibida no es valida", 400
         blockchain.transacciones_no_confirmadas = []
     return error
 
@@ -263,6 +290,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     puerto = args.puerto
+    print("puerto", puerto)
 
     app.run(host='0.0.0.0', port=puerto)
     th.join()
