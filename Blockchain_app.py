@@ -61,19 +61,18 @@ def blockchain_completa():
 
 @app.route('/minar', methods=['GET'])
 def minar():
-    semaforo_copia_seguridad.acquire()
     # Antes de minar, comprobamos si hay conflictos
     if resuelve_conflictos():
-        # Esto obliga al nodo a volver a capturar transacciones si quiere 
+        # Esto obliga al nodo a volver a capturar transacciones si quiere
         # crear el nuevo bloque
         response = {
             'mensaje': "Ha habido un conflicto. Esta cadena se ha actualizado con una version mas larga"
         }
         semaforo_copia_seguridad.release()
         return jsonify(response), 200
-        
+    semaforo_copia_seguridad.acquire()
     # No hay transacciones
-    elif len(blockchain.transacciones_no_confirmadas) == 0:
+    if len(blockchain.transacciones_no_confirmadas) == 0:
         response = {
             'mensaje': "No es posible crear un nuevo bloque. No hay transacciones"
         }
@@ -119,7 +118,7 @@ def hilo_copia_seguridad():
         t2 = time.time()
         while t2 - t1 < 60:
             t2 = time.time()
-        
+
         # POSIBLE MEJORA: SEÑAL EN EL MAIN CADA 60 SEGUNDOS AL HILO
 
         semaforo_copia_seguridad.acquire()
@@ -150,18 +149,21 @@ def detalles_nodo_actual():
 
 @app.route('/nodos/registrar', methods=['POST'])
 def registrar_nodos_completo():
+    semaforo_copia_seguridad.acquire()
     values = request.get_json()
     global blockchain
     global nodos_red
     nodos_nuevos = values.get('direccion_nodos')
     if nodos_nuevos is None:
+        semaforo_copia_seguridad.release()
         return "Error: No se ha proporcionado una lista de nodos", 400
     all_correct = True  # [Codigo a desarrollar]
     for nodo in nodos_nuevos:
         # añadimos el nodo a la red
         nodos_red.add(nodo)
     #  obtenemos una copia de la blockchain
-    blockhchain_copy = [b.toDict() for b in blockchain.cadena_bloques if b.hash is not None]
+    blockhchain_copy = [b.toDict()
+                        for b in blockchain.cadena_bloques if b.hash is not None]
     blockhchain_copy.pop(0)
     # añadimos el nodo del que pendenpara pasarselo a todos los nodos
 
@@ -171,17 +173,22 @@ def registrar_nodos_completo():
 
     print("los nodos de la red en registrar nodos completo es ", nodos_red)
 
-    for nodo in nodos_red:
+    nodos_red_copy = nodos_red
+    for nodo in nodos_red_copy:
+        print(f'\nEnviando copia de seguridad a {nodo}\n')
+        print(f'\nLos nodos red son {nodos_red}\n')
         #  le pasamos todos los nodos menos el nodo en cuestion
         # nodos_red.remove(nodo)
         data = {
-            'nodos_direcciones': [n for n in nodos_red if n != nodo],
+            'nodos_direcciones': [n for n in nodos_red_copy if n != nodo],
             'blockchain': blockhchain_copy
         }
         print(f"Vamos a hacer request a {nodo}/nodos/registro_simple")
 
+        semaforo_copia_seguridad.release()
         response = requests.post(f"{nodo}/nodos/registro_simple", data=json.dumps(
             data), headers={'Content-Type': "application/json"})
+        semaforo_copia_seguridad.acquire()
         # nodos_red.add(nodo)  #  añadimos de nuevo el nodo
     # nodos_red.remove(f"http://{mi_ip}:{puerto}")    # quitamos el nodo local
 
@@ -195,34 +202,33 @@ def registrar_nodos_completo():
         response = {
             'mensaje': 'Error notificando el nodo estipulado',
         }
+    semaforo_copia_seguridad.release()
     return jsonify(response), 201
 
 
 @app.route('/nodos/registro_simple', methods=['POST'])
 def registrar_nodo_actualiza_blockchain():
+    semaforo_copia_seguridad.acquire()
     # Obtenemos la variable global de blockchain
     global blockchain
     global nodos_red
 
-    print("puerto  en registro simple es", puerto)  # BORRAR ===================
+    # BORRAR ===================
+    print("puerto  en registro simple es", puerto)
 
     read_json = request.get_json()
     #  actualizamos la lista de nodos red
     nodos_red = set(read_json.get("nodos_direcciones"))
 
-    print("nodos red en registro simple es", nodos_red) # BORRAR ===============
+    print("nodos red en registro simple es",
+          nodos_red)  # BORRAR ===============
 
     # [...] Codigo a desarrollar
     blockchain_leida = read_json.get("blockchain")
-    blockchain = Blockchain.Blockchain()
-    blockchain.primer_bloque()
-    for bloque_leido in blockchain_leida:
-        bloque = Blockchain.Bloque(bloque_leido["indice"], bloque_leido["transacciones"],
-                                   bloque_leido["timestamp"], bloque_leido["hash_previo"], bloque_leido["prueba"])
-        #  integra bloque ve si el hash prueba coincide con el hash del bloque
-        if not blockchain.integra_bloque(bloque, bloque_leido["hash"]):
-            return "Error: La blockchain recibida no es valida", 400
+    
+    integrar_cadena(blockchain_leida) # ========================== preguntar si tmbn eliminamos las transacciones no confirmadas
 
+    semaforo_copia_seguridad.release()
     # [...] fin del codigo a desarrollar
     if blockchain_leida is None:
         return "El blockchain de la red esta currupto", 400
@@ -248,19 +254,20 @@ def resuelve_conflictos():
     error = False
     #  obtenemos la cadena de cada nodo
     for nodo in nodos_red:
-
-        print(f"Vamos a hacer request a {nodo}/blockchain")    # BORRAR ===============
+        print(f'ESTOY RESOLVIENDO UN CONFLICTO CON EL NODO {nodo}')
+        # BORRAR ===============
+        print(f"Vamos a hacer request a {nodo}/blockchain")
 
         response = requests.get(f"{nodo}/chain")
-        
+
         if response.status_code == 200:
-            
+
             #  obtenemos la cadena
             cadena = response.json()["chain"]
-            
+
             # obtenemos su longitud
             longitud = len(cadena)
-            
+
             #  comprobamos que la longitud de la cadena sea mayor que la actual
             if longitud > longitud_actual:
                 # Nuestra cadena no es la mas larga, se ha quedado atrás
@@ -269,20 +276,27 @@ def resuelve_conflictos():
                 cadena_actual = cadena
     # despues de comprobar todos los nodos, vemos que no ha conflictos
     if error:
-        blockchain = Blockchain.Blockchain()
-        blockchain.primer_bloque()
-        for bloque_leido in cadena_actual:
-            bloque = Blockchain.Bloque(bloque_leido["indice"], bloque_leido["transacciones"],
-                                    bloque_leido["timestamp"], bloque_leido["hash_previo"], bloque_leido["prueba"])
-            #  integra bloque ve si el hash prueba coincide con el hash del bloque
-            if not blockchain.integra_bloque(bloque, bloque_leido["hash"]):
-                return "Error: La blockchain recibida no es valida", 400
-        blockchain.transacciones_no_confirmadas = []
+        semaforo_copia_seguridad.acquire()
+        integrar_cadena(cadena_actual)
+        semaforo_copia_seguridad.release()
     return error
 
 
+def integrar_cadena(cadena):
+    blockchain = Blockchain.Blockchain()
+    blockchain.primer_bloque()
+    for bloque_leido in cadena:
+        bloque = Blockchain.Bloque(bloque_leido["indice"], bloque_leido["transacciones"],
+                                    bloque_leido["timestamp"], bloque_leido["hash_previo"], bloque_leido["prueba"])
+        #  integra bloque ve si el hash prueba coincide con el hash del bloque
+        if not blockchain.integra_bloque(bloque, bloque_leido["hash"]):
+            return "Error: La blockchain recibida no es valida", 400
+    blockchain.transacciones_no_confirmadas = [] # ================================ esto cuando registramos nodos tmbn hay q hacerlo???
+
+
+
 if __name__ == '__main__':
-    th=Thread(target=hilo_copia_seguridad)
+    th = Thread(target=hilo_copia_seguridad)
     th.start()
     parser = ArgumentParser()
     parser.add_argument('-p', '--puerto', default=5000,
@@ -294,7 +308,6 @@ if __name__ == '__main__':
 
     app.run(host='0.0.0.0', port=puerto)
     th.join()
-        
 
 
 '''
