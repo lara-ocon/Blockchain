@@ -99,11 +99,10 @@ class Blockchain(object):
         transaccion = {'origen': origen, 'destino': destino, 'cantidad' : cantidad, 'tiempo': time.time()}
         # esto lo metemos en la lista de transacciones sin cofirmar
         self.transacciones_no_confirmadas.append(transaccion)
-        # esto prob haya que cambiarlo si lo hacemos con listas enlzadas, no listas de listas
 
-        # lo almacenaremos al final de la Blockchain, entonces devolvemos el ID del ultimo?
-        # ESTO FALTA POR HACER
-        # return indice_ultimo_bloque
+        # devolvemos el indice del ultimo bloque de la blockchain
+        return self.cadena_bloques[-1].indice
+
 
     def prueba_trabajo(self, bloque: Bloque) -> str:
         """
@@ -176,6 +175,7 @@ class Blockchain(object):
     def last_block(self):
         # Esta funcion devuelve el ultimo bloque
         return self.cadena_bloques[-1]
+    
         
 # DUDAS
 # timestamp del primer bloque en string?

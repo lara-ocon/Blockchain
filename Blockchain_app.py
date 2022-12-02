@@ -14,7 +14,7 @@ import json
 
 import platform as pl  #  obtemer informacion del nodo
 
-import requests
+import fichero_requests
 
 # Instancia del nodo
 app = Flask(__name__)
@@ -38,10 +38,11 @@ def nueva_transaccion():
     required = ['origen', 'destino', 'cantidad']
     if not all(k in values for k in required):
         return 'Faltan valores', 400
-    # Creamos una nueva transaccion aqui
-    blockchain.nueva_transaccion(
+    # Creamos una nueva transaccion aqui, la función nueva transaccion
+    # nos devuelve el indice del ultimo bloque
+    index = blockchain.nueva_transaccion(
         values['origen'], values['destino'], values['cantidad'])
-    index = len(blockchain.cadena_bloques) + 1
+    index += 1 # añadiremos la transaccion al siguiente bloque
 
     response = {
         'mensaje': f'La transaccion se incluira en el bloque con indice {index}'}
@@ -97,7 +98,7 @@ def minar():
 
         # SIEMPRE ES CORRECTO, PERO POR SI ACASO LO DEJAMOS
         if correct:
-            response = {'hash_bloque': nuevo_bloque.hash, 'hash_previo': previous_hash, 'indice': nuevo_bloque.indice, 'mensaje': 'Nuevo blooque minado',
+            response = {'hash_bloque': nuevo_bloque.hash, 'hash_previo': previous_hash, 'indice': nuevo_bloque.indice, 'mensaje': 'Nuevo bloque minado',
                         'prueba': nuevo_bloque.prueba, 'timestamp': nuevo_bloque.timestamp, 'transacciones': nuevo_bloque.transacciones}
             codigo = 200
         else:
@@ -186,7 +187,7 @@ def registrar_nodos_completo():
         print(f"Vamos a hacer request a {nodo}/nodos/registro_simple")
 
         semaforo_copia_seguridad.release()
-        response = requests.post(f"{nodo}/nodos/registro_simple", data=json.dumps(
+        response = fichero_requests.post(f"{nodo}/nodos/registro_simple", data=json.dumps(
             data), headers={'Content-Type': "application/json"})
         semaforo_copia_seguridad.acquire()
         # nodos_red.add(nodo)  #  añadimos de nuevo el nodo
@@ -258,7 +259,7 @@ def resuelve_conflictos():
         # BORRAR ===============
         print(f"Vamos a hacer request a {nodo}/blockchain")
 
-        response = requests.get(f"{nodo}/chain")
+        response = fichero_requests.get(f"{nodo}/chain")
 
         if response.status_code == 200:
 
