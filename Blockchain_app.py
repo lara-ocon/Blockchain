@@ -276,13 +276,16 @@ def resuelve_conflictos():
                 cadena_actual = cadena
     # despues de comprobar todos los nodos, vemos que no ha conflictos
     if error:
+        cadena_actual.pop(0)
         semaforo_copia_seguridad.acquire()
         integrar_cadena(cadena_actual)
+        blockchain.transacciones_no_confirmadas = [] # ================================ esto cuando registramos nodos tmbn hay q hacerlo???
         semaforo_copia_seguridad.release()
     return error
 
 
 def integrar_cadena(cadena):
+    global blockchain
     blockchain = Blockchain.Blockchain()
     blockchain.primer_bloque()
     for bloque_leido in cadena:
@@ -291,7 +294,6 @@ def integrar_cadena(cadena):
         #  integra bloque ve si el hash prueba coincide con el hash del bloque
         if not blockchain.integra_bloque(bloque, bloque_leido["hash"]):
             return "Error: La blockchain recibida no es valida", 400
-    blockchain.transacciones_no_confirmadas = [] # ================================ esto cuando registramos nodos tmbn hay q hacerlo???
 
 
 
