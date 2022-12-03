@@ -168,30 +168,20 @@ def registrar_nodos_completo():
     blockhchain_copy.pop(0)
     # añadimos el nodo del que pendenpara pasarselo a todos los nodos
 
-    print(f"Añadimos a nodos red {mi_ip}:{puerto}")
-
     nodos_red.add(f"http://{mi_ip}:{puerto}")
-
-    print("los nodos de la red en registrar nodos completo es ", nodos_red)
 
     nodos_red_copy = nodos_red
     for nodo in nodos_red_copy:
-        print(f'\nEnviando copia de seguridad a {nodo}\n')
-        print(f'\nLos nodos red son {nodos_red}\n')
         #  le pasamos todos los nodos menos el nodo en cuestion
-        # nodos_red.remove(nodo)
         data = {
             'nodos_direcciones': [n for n in nodos_red_copy if n != nodo],
             'blockchain': blockhchain_copy
         }
-        print(f"Vamos a hacer request a {nodo}/nodos/registro_simple")
 
         semaforo_copia_seguridad.release()
         response = requests.post(f"{nodo}/nodos/registro_simple", data=json.dumps(
             data), headers={'Content-Type': "application/json"})
         semaforo_copia_seguridad.acquire()
-        # nodos_red.add(nodo)  #  añadimos de nuevo el nodo
-    # nodos_red.remove(f"http://{mi_ip}:{puerto}")    # quitamos el nodo local
 
     # Fin codigo a desarrollar
     if all_correct:
@@ -214,20 +204,14 @@ def registrar_nodo_actualiza_blockchain():
     global blockchain
     global nodos_red
 
-    # BORRAR ===================
-    print("puerto  en registro simple es", puerto)
-
     read_json = request.get_json()
     #  actualizamos la lista de nodos red
     nodos_red = set(read_json.get("nodos_direcciones"))
 
-    print("nodos red en registro simple es",
-          nodos_red)  # BORRAR ===============
-
     # [...] Codigo a desarrollar
     blockchain_leida = read_json.get("blockchain")
     
-    integrar_cadena(blockchain_leida) # ========================== preguntar si tmbn eliminamos las transacciones no confirmadas
+    integrar_cadena(blockchain_leida)
 
     semaforo_copia_seguridad.release()
     # [...] fin del codigo a desarrollar
@@ -248,17 +232,11 @@ def resuelve_conflictos():
     global blockchain
     global nodos_red
 
-    print("nos red es: ", nodos_red)  # BORRAR ===================
-
     longitud_actual = len(blockchain.cadena_bloques)
     # [Codigo a completar]
     error = False
     #  obtenemos la cadena de cada nodo
     for nodo in nodos_red:
-        print(f'ESTOY RESOLVIENDO UN CONFLICTO CON EL NODO {nodo}')
-        # BORRAR ===============
-        print(f"Vamos a hacer request a {nodo}/blockchain")
-
         response = requests.get(f"{nodo}/chain")
 
         if response.status_code == 200:
