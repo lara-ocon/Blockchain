@@ -24,7 +24,7 @@ print(r.text)
 print("\nRegistramos al nodo 5001 en el puerto 5000.")
 # registramos un nodo
 r = requests.post('http://127.0.0.1:5000/nodos/registrar', 
-                    body =json.dumps({"direccion_nodos": ["http://127.0.0.1:5001"]}),
+                    data=json.dumps({"direccion_nodos": ["http://127.0.0.1:5001"]}),
                     headers=cabecera)
 print(r.text)
 
