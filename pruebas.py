@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-conjunto = set()
-conjunto.append(1)
-print(conjunto)
-=======
 """
 
 conjunto = set()
@@ -29,4 +24,3 @@ if not cadena.integra_num(2):
     print(False)
 cadena.integra_num(1)
 print(cadena.cadena_bloques)
->>>>>>> lara2

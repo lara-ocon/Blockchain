@@ -1,6 +1,4 @@
-import fichero_requests
-import fichero_requests
-import json
+import requests
 import json
 
 # Cabecera JSON (comun a todas)
@@ -9,30 +7,30 @@ cabecera ={'Content-type': 'application/json', 'Accept': 'text/plain'}
 print("\nGeneramos nueva transacción en el puerto 5000.")
 # datos transaccion
 transaccion_nueva ={'origen': 'nodoA', 'destino': 'nodoB', 'cantidad': 10}
-r = fichero_requests.post('http://127.0.0.1:5000/transacciones/nueva', data =json.dumps(
+r = requests.post('http://127.0.0.1:5000/transacciones/nueva', data =json.dumps(
                                          transaccion_nueva), headers=cabecera)
 print(r.text)
 
 print("\nMinamos un bloque en el puerto 5000.")
 # minamos un bloque
-r = fichero_requests.get('http://127.0.0.1:5000/minar')
+r = requests.get('http://127.0.0.1:5000/minar')
 print(r.text)
 
 print("\nObtenemos la cadena del puerto 5000.")
 # obtenemos su cadena
-r = fichero_requests.get('http://127.0.0.1:5000/chain')
+r = requests.get('http://127.0.0.1:5000/chain')
 print(r.text)
 
 print("\nRegistramos al nodo 5001 en el puerto 5000.")
 # registramos un nodo
-r = fichero_requests.post('http://127.0.0.1:5000/nodos/registrar', 
+r = requests.post('http://127.0.0.1:5000/nodos/registrar', 
                     body =json.dumps({"direccion_nodos": ["http://127.0.0.1:5001"]}),
                     headers=cabecera)
 print(r.text)
 
 print("\nObtenemos la cadena del puerto 5001.")
 # vemos la cadena del nodo en el puerto 5001
-r = fichero_requests.get('http://127.0.0.1:5000/chain')
+r = requests.get('http://127.0.0.1:5000/chain')
 print(r.text)
 
 print("\nVamos a probar a generar un conflicto.")
@@ -44,34 +42,34 @@ print("\nVamos a probar a generar un conflicto.")
 print("\nPrimero, generamos transacciones en el puerto 5001 y las minamos.")
 # datos transaccion
 transaccion_nueva ={'origen': 'nodoA', 'destino': 'nodoB', 'cantidad': 10}
-r = fichero_requests.post('http://127.0.0.1:5001/transacciones/nueva', data =json.dumps(
+r = requests.post('http://127.0.0.1:5001/transacciones/nueva', data =json.dumps(
                                          transaccion_nueva), headers=cabecera)
 print(r.text)
 
 # minamos un bloque en el 5000
-r = fichero_requests.get('http://127.0.0.1:5001/minar')
+r = requests.get('http://127.0.0.1:5001/minar')
 print(r.text)
 
 # obtenemos su cadena
-r = fichero_requests.get('http://127.0.0.1:5001/chain')
+r = requests.get('http://127.0.0.1:5001/chain')
 print(r.text)
 
 print("\nAhora, generamos transacciones en el puerto 5000 y las minamos.")
 # datos transaccion
 transaccion_nueva ={'origen': 'nodoA', 'destino': 'nodoB', 'cantidad': 10}
-r = fichero_requests.post('http://127.0.0.1:5000/transacciones/nueva', data =json.dumps(
+r = requests.post('http://127.0.0.1:5000/transacciones/nueva', data =json.dumps(
                                          transaccion_nueva), headers=cabecera)
 print(r.text)
 
 # minamos bloque en el 5001
-r = fichero_requests.get('http://127.0.0.1:5000/minar')
+r = requests.get('http://127.0.0.1:5000/minar')
 print(r.text)
 
 # Aquí debería haber un conflicto, y el nodo 5000 debería heredar la 
 # cadena del 5001, pues es la más larga hasta el momento.
 
 # obtenemos su cadena
-r = fichero_requests.get('http://127.0.0.1:5000/chain')
+r = requests.get('http://127.0.0.1:5000/chain')
 print(r.text)
 
 

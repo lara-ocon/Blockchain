@@ -14,7 +14,7 @@ import json
 
 import platform as pl  #  obtemer informacion del nodo
 
-import fichero_requests
+import requests
 
 # Instancia del nodo
 app = Flask(__name__)
@@ -187,7 +187,7 @@ def registrar_nodos_completo():
         print(f"Vamos a hacer request a {nodo}/nodos/registro_simple")
 
         semaforo_copia_seguridad.release()
-        response = fichero_requests.post(f"{nodo}/nodos/registro_simple", data=json.dumps(
+        response = requests.post(f"{nodo}/nodos/registro_simple", data=json.dumps(
             data), headers={'Content-Type': "application/json"})
         semaforo_copia_seguridad.acquire()
         # nodos_red.add(nodo)  #  añadimos de nuevo el nodo
@@ -259,7 +259,7 @@ def resuelve_conflictos():
         # BORRAR ===============
         print(f"Vamos a hacer request a {nodo}/blockchain")
 
-        response = fichero_requests.get(f"{nodo}/chain")
+        response = requests.get(f"{nodo}/chain")
 
         if response.status_code == 200:
 
