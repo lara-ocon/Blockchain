@@ -1,5 +1,11 @@
+"""
+Practica final Fundamentos de los Sistemas Operativos - IMAT
+Hecho por: Lara Ocón y Alejandro Martínez de Guinea
+Aplicación web básica
+"""
+
+# Importamos las librerías necesarias
 import Blockchain
-from uuid import uuid4
 
 import socket
 from flask import Flask, jsonify, request
@@ -35,15 +41,16 @@ semaforo_copia_seguridad = Semaphore(1)
 @app.route('/transacciones/nueva', methods=['POST'])
 def nueva_transaccion():
     values = request.get_json()
-    # Comprobamos que todos los datos de la transaccion estan
+    # Comprobamos que todos los datos de la transaccion están
     required = ['origen', 'destino', 'cantidad']
     if not all(k in values for k in required):
         return 'Faltan valores', 400
-    # Creamos una nueva transaccion aqui, la función nueva transaccion
+    # Creamos una nueva transaccion, la función nueva transaccion
     # nos devuelve el indice del ultimo bloque
     index = blockchain.nueva_transaccion(
         values['origen'], values['destino'], values['cantidad'])
-    index += 1 # añadiremos la transaccion al siguiente bloque
+    # sumamos 1 al indice pues añadiremos la transaccion al siguiente bloque  
+    index += 1
 
     response = {
         'mensaje': f'La transaccion se incluira en el bloque con indice {index}'}
@@ -68,7 +75,7 @@ def minar():
         # Esto obliga al nodo a volver a capturar transacciones si quiere
         # crear el nuevo bloque
         response = {
-            'mensaje': "Ha habido un conflicto. Esta cadena se ha actualizado con una version mas larga"
+            'mensaje': "Ha habido un conflicto. Esta cadena se ha actualizado con una version mas larga."
         }
         semaforo_copia_seguridad.release()
         return jsonify(response), 200
@@ -76,18 +83,17 @@ def minar():
     # No hay transacciones
     if len(blockchain.transacciones_no_confirmadas) == 0:
         response = {
-            'mensaje': "No es posible crear un nuevo bloque. No hay transacciones"
+            'mensaje': "No es posible crear un nuevo bloque. No hay transacciones."
         }
         semaforo_copia_seguridad.release()
         return jsonify(response), 200
     else:
-        # Hay transaccion, por lo tanto ademas de minear el bloque, recibimos recompensa
+        # Hay transaccion, por lo tanto ademas de minar el bloque, recibimos recompensa
         previous_hash = blockchain.last_block().hash
         # Recibimos un pago por minar el bloque. Creamos una nueva transaccion con:
         # Dejamos como origen el 0
-        # Destino nuestra ip
+        # Destino: nuestra ip
         # Cantidad = 1
-        # [Completar el siguiente codigo]
 
         # generamos una nueva transaccion
         blockchain.nueva_transaccion("0", mi_ip, 1)
@@ -97,7 +103,7 @@ def minar():
 
         correct = blockchain.integra_bloque(nuevo_bloque, hash_prueba)
 
-        # SIEMPRE ES CORRECTO, PERO POR SI ACASO LO DEJAMOS
+        # Siempre será correcto, pero lo dejamos por si acaso.
         if correct:
             response = {'hash_bloque': nuevo_bloque.hash, 'hash_previo': previous_hash, 'indice': nuevo_bloque.indice, 'mensaje': 'Nuevo bloque minado',
                         'prueba': nuevo_bloque.prueba, 'timestamp': nuevo_bloque.timestamp, 'transacciones': nuevo_bloque.transacciones}
@@ -105,7 +111,7 @@ def minar():
         else:
 
             response = {
-                'mensaje': "No ha sido posible integrar el bloque a la Blockchain"}
+                'mensaje': "No ha sido posible integrar el bloque a la Blockchain."}
             codigo = 400
 
         semaforo_copia_seguridad.release()
@@ -116,15 +122,13 @@ def hilo_copia_seguridad():
     while True:
         t1 = time.time()
 
-        # esperamos a que pasen 60 segundos para realizar la siguiente copua de seguridad
+        # esperamos a que pasen 60 segundos para realizar la siguiente copia de seguridad
         t2 = time.time()
         while t2 - t1 < 60:
             t2 = time.time()
 
-        # POSIBLE MEJORA: SEÑAL EN EL MAIN CADA 60 SEGUNDOS AL HILO
-
         semaforo_copia_seguridad.acquire()
-        # entro en la zona critica, ninguna peticion puede realizarse a la vez
+        # entramos en la zona crítica, ninguna petición puede realizarse a la vez
         # de esta forma nos quedamos con una foto de la blockchain
         response = {
             # Solamente permitimos la cadena de aquellos bloques finales que tienen hash
@@ -141,6 +145,7 @@ def hilo_copia_seguridad():
 
 @app.route('/system', methods=['GET'])
 def detalles_nodo_actual():
+    # mostramos la información mas importante del nodo
     response = {
         'maquina': pl.machine(),
         'nombre_sistema': pl.system(),
@@ -167,13 +172,13 @@ def registrar_nodos_completo():
     blockhchain_copy = [b.toDict()
                         for b in blockchain.cadena_bloques if b.hash is not None]
     blockhchain_copy.pop(0)
-    # añadimos el nodo del que pendenpara pasarselo a todos los nodos
 
+    # añadimos el nodo del que penden para pasarselo a todos los nodos
     nodos_red.add(f"http://{mi_ip}:{puerto}")
 
     nodos_red_copy = nodos_red
     for nodo in nodos_red_copy:
-        #  le pasamos todos los nodos menos el nodo en cuestion
+        #  le pasamos todos los nodos menos el nodo en cuestión
         data = {
             'nodos_direcciones': [n for n in nodos_red_copy if n != nodo],
             'blockchain': blockhchain_copy
@@ -184,7 +189,6 @@ def registrar_nodos_completo():
             data), headers={'Content-Type': "application/json"})
         semaforo_copia_seguridad.acquire()
 
-    # Fin codigo a desarrollar
     if all_correct:
         response = {
             'mensaje': 'Se han incluido nuevos nodos en la red',
@@ -209,13 +213,13 @@ def registrar_nodo_actualiza_blockchain():
     #  actualizamos la lista de nodos red
     nodos_red = set(read_json.get("nodos_direcciones"))
 
-    # [...] Codigo a desarrollar
+    # obtenemos una cpopia de la blockchain
     blockchain_leida = read_json.get("blockchain")
     
     integrar_cadena(blockchain_leida)
 
     semaforo_copia_seguridad.release()
-    # [...] fin del codigo a desarrollar
+    
     if blockchain_leida is None:
         return "El blockchain de la red esta currupto", 400
     else:
@@ -259,7 +263,7 @@ def resuelve_conflictos():
         cadena_actual.pop(0)
         semaforo_copia_seguridad.acquire()
         integrar_cadena(cadena_actual)
-        blockchain.transacciones_no_confirmadas = [] # ================================ esto cuando registramos nodos tmbn hay q hacerlo???
+        blockchain.transacciones_no_confirmadas = []
         semaforo_copia_seguridad.release()
     return error
 
@@ -276,7 +280,6 @@ def integrar_cadena(cadena):
             return "Error: La blockchain recibida no es valida", 400
 
 
-
 if __name__ == '__main__':
     th = Thread(target=hilo_copia_seguridad)
     th.start()
@@ -290,21 +293,3 @@ if __name__ == '__main__':
 
     app.run(host='0.0.0.0', port=puerto)
     th.join()
-
-
-'''
-CAMBIOS REALIZADOS:
-
-- nodos_red.remove(nodo_actual) no es necesario ya que al añadirlo en nodos_red tmbn actualizamos dicho nodo
-- al integrar bloque fallaba porq el primer bloque tenia un hash incorrecto (no empezaba por 4 ceros)
-- Dentro de minar, antes de minar un bloque comprobamos que no hay conflictos (ed: nuestra cadena no esta actualizada
-    del todo, ed: no es la mas larga)
-
-
-FALLOS:
-
-- FALLO MUY MUY GORDO: cuando añadimos un nodo, al integrar los bloques y comprobar el hash,
-                       da error porq el hash calculado es distinto al propuesto (como ya habia
-                       supuesto yo en clase) y no tengo ni zorra de como solucionarlo
-
-'''
