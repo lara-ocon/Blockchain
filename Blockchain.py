@@ -1,3 +1,8 @@
+"""
+Practica final Fundamentos de los Sistemas Operativos - IMAT
+Hecho por: Lara Ocón y Alejandro Martínez de Guinea
+Librería Blockchain
+"""
 
 from typing import List, Dict
 import json
@@ -176,18 +181,6 @@ class Blockchain(object):
         # Esta funcion devuelve el ultimo bloque
         return self.cadena_bloques[-1]
     
-        
-# DUDAS
-# timestamp del primer bloque en string?
-
-
-                
-'''
-DUDAS:
-
-- Primer bloque: timestamp en entero o string
-- Copia seguridad: paramos en el segundo 60 o esperamos a q termine de editar
-'''
 
 
 

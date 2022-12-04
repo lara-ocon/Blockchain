@@ -1,3 +1,9 @@
+"""
+Practica final Fundamentos de los Sistemas Operativos - IMAT
+Hecho por: Lara Ocón y Alejandro Martínez de Guinea
+Fichero requests
+"""
+
 import requests
 import json
 
