@@ -30,7 +30,7 @@ print(r.text)
 
 print("\nObtenemos la cadena del puerto 5001.")
 # vemos la cadena del nodo en el puerto 5001
-r = requests.get('http://127.0.0.1:5000/chain')
+r = requests.get('http://127.0.0.1:5001/chain')
 print(r.text)
 
 print("\nVamos a probar a generar un conflicto.")
