@@ -26,6 +26,7 @@ nodos_red = set()
 
 # Para saber mi ip
 mi_ip = socket.gethostbyname(socket.gethostname())
+mi_ip = '192.168.56.1'
 
 # Semáforo para la copia de seguridad
 semaforo_copia_seguridad = Semaphore(1)
